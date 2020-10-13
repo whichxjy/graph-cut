@@ -17,9 +17,11 @@ class GraphMaker:
 
     def add_seed(self, seed):
         if self.seed_mode == self.OBJ_SEED_MODE:
-            self.obj_seed_list.append(seed)
+            if seed not in self.obj_seed_list:
+                self.obj_seed_list.append(seed)
         elif self.seed_mode == self.BKG_SEED_MODE:
-            self.bkg_seed_list.append(seed)
+            if seed not in self.bkg_seed_list:
+                self.bkg_seed_list.append(seed)
 
     def switch_seed_mode(self):
         if self.seed_mode == self.OBJ_SEED_MODE:
