@@ -14,6 +14,12 @@ class CutGUI(QWidget):
         self.graph_maker = GraphMaker()
         self.display_image = self.graph_maker.image
 
+        self.obj_seed_pen = QPen(Qt.red)
+        self.obj_seed_pen.setWidth(3)
+
+        self.bkg_seed_pen = QPen(Qt.blue)
+        self.bkg_seed_pen.setWidth(3)
+
     def paintEvent(self, event):
         weight = self.display_image.shape[1]
         height = self.display_image.shape[0]
@@ -23,12 +29,13 @@ class CutGUI(QWidget):
         painter = QPainter(self)
         painter.drawPixmap(self.rect(), QPixmap(qimage))
 
-        pen_rectangle = QPen(Qt.red)
-        pen_rectangle.setWidth(3)
+        for obj_seed in self.graph_maker.obj_seed_list:
+            painter.setPen(self.obj_seed_pen)
+            painter.drawRect(obj_seed[0], obj_seed[1], 3, 3)
 
-        painter.setPen(pen_rectangle)
-        for seed in self.graph_maker.seed_list:
-            painter.drawRect(seed[0], seed[1], 3, 3)
+        for bkg_seed in self.graph_maker.bkg_seed_list:
+            painter.setPen(self.bkg_seed_pen)
+            painter.drawRect(bkg_seed[0], bkg_seed[1], 3, 3)
 
     def mouseMoveEvent(self, event):
         self.graph_maker.add_seed((event.x(), event.y()))
@@ -37,6 +44,8 @@ class CutGUI(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()
+        else:
+            self.graph_maker.switch_seed_mode()
 
 
 if __name__ == "__main__":
