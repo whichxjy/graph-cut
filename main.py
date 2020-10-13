@@ -14,8 +14,6 @@ class CutGUI(QWidget):
         self.graph_maker = GraphMaker()
         self.display_image = self.graph_maker.image
 
-        self.hello = (0, 0)
-
     def paintEvent(self, event):
         weight = self.display_image.shape[1]
         height = self.display_image.shape[0]
@@ -29,10 +27,11 @@ class CutGUI(QWidget):
         pen_rectangle.setWidth(3)
 
         painter.setPen(pen_rectangle)
-        painter.drawRect(self.hello[0], self.hello[1], 3, 3)
+        for seed in self.graph_maker.seed_list:
+            painter.drawRect(seed[0], seed[1], 3, 3)
 
     def mouseMoveEvent(self, event):
-        self.hello = (event.x(), event.y())
+        self.graph_maker.add_seed((event.x(), event.y()))
         self.update()
 
     def keyPressEvent(self, event):
