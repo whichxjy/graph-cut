@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 import sys
 import numpy as np
+import cv2
 
 from cut import GraphMaker
 
@@ -12,30 +13,20 @@ class CutGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.graph_maker = GraphMaker()
-        self.display_image = self.graph_maker.image
-
-        self.obj_seed_pen = QPen(Qt.red)
-        self.obj_seed_pen.setWidth(3)
-
-        self.bkg_seed_pen = QPen(Qt.blue)
-        self.bkg_seed_pen.setWidth(3)
+        self.origin_image = self.graph_maker.image
 
     def paintEvent(self, event):
-        weight = self.display_image.shape[1]
-        height = self.display_image.shape[0]
+        weight = self.origin_image.shape[1]
+        height = self.origin_image.shape[0]
+
+        display_image = cv2.addWeighted(
+            self.origin_image, 0.9, self.graph_maker.seed_layer, 0.8, 0.1)
+
         qimage = QImage(
-            self.display_image.data, weight, height, QImage.Format_RGB888).rgbSwapped()
+            display_image.data, weight, height, QImage.Format_RGB888).rgbSwapped()
 
         painter = QPainter(self)
         painter.drawPixmap(self.rect(), QPixmap(qimage))
-
-        for obj_seed in self.graph_maker.obj_seed_list:
-            painter.setPen(self.obj_seed_pen)
-            painter.drawRect(obj_seed[0], obj_seed[1], 3, 3)
-
-        for bkg_seed in self.graph_maker.bkg_seed_list:
-            painter.setPen(self.bkg_seed_pen)
-            painter.drawRect(bkg_seed[0], bkg_seed[1], 3, 3)
 
     def mouseMoveEvent(self, event):
         self.graph_maker.add_seed((event.x(), event.y()))
