@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import maxflow
 
 
 class GraphMaker:
@@ -16,9 +17,16 @@ class GraphMaker:
 
     MAX_NUM = 99999999999
 
+    OBJ_SEG_COLOR = (0, 0, 0)
+    BKG_SEG_COLOR = (204, 204, 153)
+
+    SHOW_SEED_MODE = 1
+    SHOW_SEG_MODE = 2
+
     def __init__(self):
         self.image = cv2.imread("./resource/hat.jpg")
         self.seed_layer = np.zeros_like(self.image)
+        self.segment_layer = np.zeros_like(self.image)
 
         self.seed_mode = self.OBJ_SEED_MODE
         self.obj_seed_list = []
@@ -28,6 +36,8 @@ class GraphMaker:
 
         self.node_list = None
         self.edge_list = None
+
+        self.show_mode = self.SHOW_SEED_MODE
 
     def add_seed(self, seed):
         if self.seed_mode == self.OBJ_SEED_MODE:
@@ -59,6 +69,12 @@ class GraphMaker:
         print("Start making graph.")
         self.make_graph()
 
+        print("Start cutting graph.")
+        self.cut_graph()
+
+        self.show_mode = self.SHOW_SEG_MODE
+        print("Done.")
+
     def init_graph(self):
         weight = self.image.shape[0]
         height = self.image.shape[1]
@@ -82,10 +98,10 @@ class GraphMaker:
         for (y, x), val in np.ndenumerate(self.graph):
             if val == self.OBJ_POS_VAL:
                 self.node_list.append(
-                    (self.get_node_index(x, y, height), self.MAX_NUM, 0))
+                    (self.get_node_index(x, y, height), 0, self.MAX_NUM))
             elif val == self.BKG_POS_VAL:
                 self.node_list.append(
-                    (self.get_node_index(x, y, height), 0, self.MAX_NUM))
+                    (self.get_node_index(x, y, height), self.MAX_NUM, 0))
             else:
                 self.node_list.append(
                     (self.get_node_index(x, y, height), 0, 0))
@@ -112,6 +128,45 @@ class GraphMaker:
             self.edge_list.append(
                 (curr_node_index, down_node_index, edge_capacity))
 
+    def cut_graph(self):
+        virtual_graph = maxflow.Graph[float](
+            len(self.node_list), len(self.edge_list))
+        virtual_node_list = virtual_graph.add_nodes(len(self.node_list))
+
+        height = self.image.shape[1]
+
+        # Add edges to terminal nodes.
+        for node in self.node_list:
+            node_index = node[0]
+            cap_source = node[1]
+            cap_sink = node[2]
+            virtual_graph.add_tedge(
+                virtual_node_list[node_index], cap_source, cap_sink)
+
+        # Add other edges.
+        for edge in self.edge_list:
+            a_node_index = edge[0]
+            b_node_index = edge[1]
+            capacity = edge[2]
+            virtual_graph.add_edge(
+                virtual_node_list[a_node_index], virtual_node_list[b_node_index], capacity, capacity)
+
+        virtual_graph.maxflow()
+
+        for node_index in range(len(self.node_list)):
+            x, y = self.get_pos(node_index, height)
+            if virtual_graph.get_segment(node_index) == 1:
+                # It's an object position.
+                self.segment_layer[y, x] = self.OBJ_SEG_COLOR
+            else:
+                # It's a background position.
+                self.segment_layer[y, x] = self.BKG_SEG_COLOR
+
+    def get_mask_layer(self):
+        if self.show_mode == self.SHOW_SEED_MODE:
+            return self.seed_layer
+        return self.segment_layer
+
     def switch_seed_mode(self):
         if self.seed_mode == self.OBJ_SEED_MODE:
             self.seed_mode = self.BKG_SEED_MODE
@@ -121,3 +176,7 @@ class GraphMaker:
     @staticmethod
     def get_node_index(x, y, col_num):
         return y * col_num + x
+
+    @staticmethod
+    def get_pos(node_index, col_num):
+        return (node_index % col_num), (node_index // col_num)

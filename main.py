@@ -21,7 +21,7 @@ class CutGUI(QWidget):
         self.resize(weight, height)
 
         display_image = cv2.addWeighted(
-            self.origin_image, 0.9, self.graph_maker.seed_layer, 0.8, 0.1)
+            self.origin_image, 0.9, self.graph_maker.get_mask_layer(), 0.8, 0.1)
 
         qimage = QImage(
             display_image.data, weight, height, QImage.Format_RGB888).rgbSwapped()
