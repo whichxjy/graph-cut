@@ -18,6 +18,7 @@ class CutGUI(QWidget):
     def paintEvent(self, event):
         weight = self.origin_image.shape[1]
         height = self.origin_image.shape[0]
+        self.resize(weight, height)
 
         display_image = cv2.addWeighted(
             self.origin_image, 0.9, self.graph_maker.seed_layer, 0.8, 0.1)
@@ -35,6 +36,8 @@ class CutGUI(QWidget):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.close()
+        elif event.key() == Qt.Key_Return:
+            self.graph_maker.process_graph()
         else:
             self.graph_maker.switch_seed_mode()
 
