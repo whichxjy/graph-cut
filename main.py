@@ -10,9 +10,9 @@ from cut import GraphMaker
 
 
 class CutGUI(QWidget):
-    def __init__(self):
+    def __init__(self, input_file):
         super().__init__()
-        self.graph_maker = GraphMaker()
+        self.graph_maker = GraphMaker(input_file)
         self.origin_image = self.graph_maker.image
 
     def paintEvent(self, event):
@@ -44,6 +44,6 @@ class CutGUI(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    gui = CutGUI()
+    gui = CutGUI("./resource/hat.jpg")
     gui.show()
     sys.exit(app.exec_())

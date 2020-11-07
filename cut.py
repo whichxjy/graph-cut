@@ -23,8 +23,8 @@ class GraphMaker:
     SHOW_SEED_MODE = 1
     SHOW_SEG_MODE = 2
 
-    def __init__(self):
-        self.image = cv2.imread("./resource/hat.jpg")
+    def __init__(self, input_file):
+        self.image = cv2.imread(input_file)
         self.seed_layer = np.zeros_like(self.image)
         self.segment_layer = np.zeros_like(self.image)
 
@@ -127,6 +127,13 @@ class GraphMaker:
                                  np.sum(np.power(self.image[y, x] - self.image[y + 1, x], 2)))
             self.edge_list.append(
                 (curr_node_index, down_node_index, edge_capacity))
+
+            # (x, y) <--> (x + 1, y + 1)
+            right_down_node_index = self.get_node_index(x + 1, y + 1, height)
+            edge_capacity = 1 / (1 +
+                                 np.sum(np.power(self.image[y, x] - self.image[y + 1, x + 1], 2)))
+            self.edge_list.append(
+                (curr_node_index, right_down_node_index, edge_capacity))
 
     def cut_graph(self):
         virtual_graph = maxflow.Graph[float](
